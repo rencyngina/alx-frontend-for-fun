@@ -1,63 +1,50 @@
 #!/usr/bin/python3
-'''
-A python  script that codes markdown to HTML
-'''
+"""
+It is a script that converts Markdown to HTML.
+"""
+
 import sys
 import os
 import re
 
-
-def convert_md_to_html(input_file, output_file):
+def convert_markdown_to_html(input_file, output_file):
     """
-    It Convert Markdown file to HTML file.
-
-    args:
-        input_file (str): Input file path.
-        output_file (str): Output file path.
+    It Converts a Markdown file to HTML and writes the output to a file.
     """
-    if not os.path.exists(input_file) or not os.path.isfile(input_file):
-        print(f"Error: Input file '{input_file}' does not exist or is not a file.")
+    # Check that the Markdown file exists and is a file
+    if not (os.path.exists(input_file) and os.path.isfile(input_file)):
+        print(f"Missing {input_file}", file=sys.stderr)
         sys.exit(1)
 
-    html_content = []
-    unordered_list_started = False
-
-    with open(input_file, "r", encoding="utf-8") as f:
+    # Read the Markdown file and convert it to HTML
+    with open(input_file, encoding="utf-8") as f:
+        html_lines = []
         for line in f:
-            line = line.rstrip()
-
-            # Handle headings
-            heading = re.split(r"#{1,6} ", line)
-            if len(heading) > 1:
-                h_level = len(line[: line.find(heading[1]) - 1])
-                html_content.append(f"<h{h_level}>{heading[1]}</h{h_level}>\n")
-
-            # Handle unordered lists
+            # Check for Markdown headings
+            match = re.match(r"^(#+) (.*)$", line)
+            if match:
+                heading_level = len(match.group(1))
+                heading_text = match.group(2)
+                html_lines.append(f"<h{heading_level}>{heading_text}</h{heading_level}>")
             else:
-                list_item = re.split(r"- ", line)
-                if len(list_item) > 1:
-                    html_content.append(f"<li>{list_item[1]}</li>\n")
-                    if not unordered_list_started:
-                        html_content.append("<ul>\n")
-                        unordered_list_started = True
-                else:
-                    if unordered_list_started:
-                        html_content.append("</ul>\n")
-                        unordered_list_started = False
-                    html_content.append(line)
+                html_lines.append(line.rstrip())
 
-        if unordered_list_started:
-            html_content.append("</ul>\n")
-
+    # Write the HTML output to a file
     with open(output_file, "w", encoding="utf-8") as f:
-        f.writelines(html_content)
-
+        f.write("\n".join(html_lines))
 
 if __name__ == "__main__":
-    if len(sys.argv[1:]) != 2:
-        print("Usage: ./markdown2html.py <input-file> <output-file>")
+    # Check that the correct number of arguments were provided
+    if len(sys.argv) != 3:
+        print("Usage: ./markdown2html.py <input_file> <output_file>", file=sys.stderr)
         sys.exit(1)
 
+    # Get the input and output file names from the command-line arguments
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    convert_md_to_html(input_file, output_file)
+
+    # Convert the Markdown file to HTML and write the output to a file
+    convert_markdown_to_html(input_file, output_file)
+
+    # Exit with a successful status code
+    sys.exit(0)
